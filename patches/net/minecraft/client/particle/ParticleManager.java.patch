@@ -1,0 +1,50 @@
+--- ../src-base/minecraft/net/minecraft/client/particle/ParticleManager.java
++++ ../src-work/minecraft/net/minecraft/client/particle/ParticleManager.java
+@@ -153,6 +153,7 @@
+ 
+     public void addEffect(Particle effect)
+     {
++        if (effect == null) return; //Forge: Prevent modders from being bad and adding nulls causing untraceable NPEs.
+         this.queue.add(effect);
+     }
+ 
+@@ -199,16 +200,10 @@
+ 
+     private void updateEffectLayer(int layer)
+     {
+-        this.world.profiler.startSection(String.valueOf(layer));
+-
+         for (int i = 0; i < 2; ++i)
+         {
+-            this.world.profiler.startSection(String.valueOf(i));
+             this.tickParticleList(this.fxLayers[layer][i]);
+-            this.world.profiler.endSection();
+         }
+-
+-        this.world.profiler.endSection();
+     }
+ 
+     private void tickParticleList(Queue<Particle> p_187240_1_)
+@@ -409,7 +404,7 @@
+ 
+     public void addBlockDestroyEffects(BlockPos pos, IBlockState state)
+     {
+-        if (state.getMaterial() != Material.AIR)
++        if (!state.getBlock().isAir(state, this.world, pos) && !state.getBlock().addDestroyEffects(world, pos, this))
+         {
+             state = state.getActualState(this.world, pos);
+             int i = 4;
+@@ -493,4 +488,13 @@
+ 
+         return "" + i;
+     }
++
++    public void addBlockHitEffects(BlockPos pos, net.minecraft.util.math.RayTraceResult target)
++    {
++        IBlockState state = world.getBlockState(pos);
++        if (state != null && !state.getBlock().addHitEffects(state, world, target, this))
++        {
++            addBlockHitEffects(pos, target.sideHit);
++        }
++     }
+ }
