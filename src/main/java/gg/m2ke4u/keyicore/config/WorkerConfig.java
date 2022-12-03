@@ -12,7 +12,6 @@ public class WorkerConfig {
     public static final YamlConfiguration CONFIGURATION = new YamlConfiguration();
 
     public static int ENTITIES_WORKER_THREADS;
-    public static int ASYNC_ENTITIES_THREADS;
     public static int GLOBAL_WORKER_THREADS;
     public static boolean AUTO_CLEAR_WORKERS;
     public static boolean SYNC_ENTITIES;
@@ -20,39 +19,37 @@ public class WorkerConfig {
 
     public static void init(){
         try{
+            ConfigurationSection workerConfig;
+            ConfigurationSection miscConfig;
+            boolean needSave = false;
             if (!CONFIG_FILE.exists()){
                 CONFIG_FILE.createNewFile();
-                CONFIGURATION.options().copyDefaults(true);
-
-                ConfigurationSection workerConfig = CONFIGURATION.createSection("workers");
-                ConfigurationSection miscConfig = CONFIGURATION.createSection("misc");
-
-                workerConfig.addDefault("entities-worker-threads",Runtime.getRuntime().availableProcessors());
-                workerConfig.addDefault("global-worker-threads",Runtime.getRuntime().availableProcessors());
-                miscConfig.addDefault("auto-clear-workers",true);
-                miscConfig.addDefault("sync-entities-ticking",false);
-                miscConfig.addDefault("disable-async-catcher",false);
-
-                ENTITIES_WORKER_THREADS = workerConfig.getInt("entities-worker-threads");
-                GLOBAL_WORKER_THREADS = workerConfig.getInt("global-worker-threads");
-                AUTO_CLEAR_WORKERS = miscConfig.getBoolean("auto-clear-workers");
-                SYNC_ENTITIES = miscConfig.getBoolean("sync-entities-ticking");
-                ASYNC_CATCHER_DISABLED = miscConfig.getBoolean("disable-async-catcher");
 
                 CONFIGURATION.load(CONFIG_FILE);
-                CONFIGURATION.save(CONFIG_FILE);
-                logger.info("[KeYiForge]Worker config inited!");
-                return;
-            }
-            CONFIGURATION.load(CONFIG_FILE);
-            ConfigurationSection workerConfig = CONFIGURATION.getConfigurationSection("workers");
-            ConfigurationSection miscConfig = CONFIGURATION.getConfigurationSection("misc");
+                CONFIGURATION.options().copyDefaults(true);
 
-            ENTITIES_WORKER_THREADS = workerConfig.getInt("entities-worker-threads");
-            GLOBAL_WORKER_THREADS = workerConfig.getInt("global-worker-threads");
-            AUTO_CLEAR_WORKERS = miscConfig.getBoolean("auto-clear-workers");
-            SYNC_ENTITIES = miscConfig.getBoolean("sync-entities-ticking");
-            ASYNC_CATCHER_DISABLED = miscConfig.getBoolean("disable-async-catcher");
+                workerConfig = CONFIGURATION.createSection("workers");
+                miscConfig = CONFIGURATION.createSection("misc");
+
+                logger.info("[KeYiForge]Worker config inited!");
+                needSave = true;
+            }else{
+                CONFIGURATION.load(CONFIG_FILE);
+
+                workerConfig = CONFIGURATION.getConfigurationSection("workers");
+                miscConfig = CONFIGURATION.getConfigurationSection("misc");
+            }
+
+            ENTITIES_WORKER_THREADS = workerConfig.getInt("entities-worker-threads",Runtime.getRuntime().availableProcessors());
+            GLOBAL_WORKER_THREADS = workerConfig.getInt("global-worker-threads",Runtime.getRuntime().availableProcessors());
+
+            AUTO_CLEAR_WORKERS = miscConfig.getBoolean("auto-clear-workers",true);
+            SYNC_ENTITIES = miscConfig.getBoolean("sync-entities-ticking",false);
+            ASYNC_CATCHER_DISABLED = miscConfig.getBoolean("disable-async-catcher",false);
+
+            if (needSave){
+                CONFIGURATION.save(CONFIG_FILE);
+            }
             logger.info("[KeYiForge]Worker config loaded");
         }catch (Exception e){
             logger.error("Failed to create or load config file!",e);

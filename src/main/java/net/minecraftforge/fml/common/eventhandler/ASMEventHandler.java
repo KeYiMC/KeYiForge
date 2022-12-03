@@ -99,6 +99,7 @@ public class ASMEventHandler implements IEventListener
                         ThreadContext.remove("mod");
                 }catch (Exception e){
                     LogManager.getLogger().error(e);
+                    e.printStackTrace();
                 }
             });
         }else{
@@ -117,6 +118,7 @@ public class ASMEventHandler implements IEventListener
                         ThreadContext.remove("mod");
                 }catch (Exception e){
                     LogManager.getLogger().error(e);
+                    e.printStackTrace();
                 }
             }
         }
