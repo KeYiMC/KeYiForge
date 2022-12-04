@@ -234,7 +234,7 @@
      }
  
      public void onActivatorRailPass(int x, int y, int z, boolean receivingPower)
-@@ -408,25 +500,49 @@
+@@ -408,24 +500,44 @@
  
      protected void moveDerailedMinecart()
      {
@@ -243,29 +243,22 @@
          this.motionX = MathHelper.clamp(this.motionX, -d0, d0);
          this.motionZ = MathHelper.clamp(this.motionZ, -d0, d0);
  
--        if (this.onGround)
 +        double moveY = motionY;
 +        if(getMaxSpeedAirVertical() > 0 && motionY > getMaxSpeedAirVertical())
-         {
--            this.motionX *= 0.5D;
--            this.motionY *= 0.5D;
--            this.motionZ *= 0.5D;
++        {
 +            moveY = getMaxSpeedAirVertical();
 +            if(Math.abs(motionX) < 0.3f && Math.abs(motionZ) < 0.3f)
 +            {
 +                moveY = 0.15f;
 +                motionY = moveY;
 +            }
-         }
- 
--        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--
--        if (!this.onGround)
-+        if (this.onGround)
++        }
++
+         if (this.onGround)
          {
--            this.motionX *= 0.949999988079071D;
--            this.motionY *= 0.949999988079071D;
--            this.motionZ *= 0.949999988079071D;
+-            this.motionX *= 0.5D;
+-            this.motionY *= 0.5D;
+-            this.motionZ *= 0.5D;
 +            // CraftBukkit start - replace magic numbers with our variables
 +            // this.motionX *= 0.5D;
 +            // this.motionY *= 0.5D;
@@ -275,27 +268,27 @@
 +            this.motionZ *= this.derailedZ;
 +            // CraftBukkit end
          }
-+
-+        double finalMoveY = moveY;
-+        this.moveTask.thenApplyAsync(f->{
-+            this.move(MoverType.SELF, this.motionX, finalMoveY, this.motionZ);
-+            if (!this.onGround)
-+            {
-+                // CraftBukkit start - replace magic numbers with our variables
-+                // this.motionX *= getDragAir();
-+                // this.motionY *= getDragAir();
-+                // this.motionZ *= getDragAir();
-+                this.motionX *= this.flyingX;
-+                this.motionY *= this.flyingY;
-+                this.motionZ *= this.flyingZ;
-+                // CraftBukkit end
-+            }
-+            return null;
-+        },MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
+ 
+-        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+-
++        this.move(MoverType.SELF, this.motionX, moveY, this.motionZ);
+         if (!this.onGround)
+         {
+-            this.motionX *= 0.949999988079071D;
+-            this.motionY *= 0.949999988079071D;
+-            this.motionZ *= 0.949999988079071D;
++            // CraftBukkit start - replace magic numbers with our variables
++            // this.motionX *= getDragAir();
++            // this.motionY *= getDragAir();
++            // this.motionZ *= getDragAir();
++            this.motionX *= this.flyingX;
++            this.motionY *= this.flyingY;
++            this.motionZ *= this.flyingZ;
++            // CraftBukkit end
+         }
      }
  
-     @SuppressWarnings("incomplete-switch")
-@@ -445,25 +561,25 @@
+@@ -445,25 +557,25 @@
              flag1 = !flag;
          }
  
@@ -327,7 +320,7 @@
                  ++this.posY;
          }
  
-@@ -509,7 +625,7 @@
+@@ -509,7 +621,7 @@
              }
          }
  
@@ -336,7 +329,7 @@
          {
              double d17 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
  
-@@ -555,20 +671,8 @@
+@@ -555,20 +667,8 @@
          this.posX = d18 + d1 * d10;
          this.posZ = d19 + d2 * d10;
          this.setPosition(this.posX, this.posY, this.posZ);
@@ -358,7 +351,7 @@
          if (aint[0][1] != 0 && MathHelper.floor(this.posX) - pos.getX() == aint[0][0] && MathHelper.floor(this.posZ) - pos.getZ() == aint[0][2])
          {
              this.setPosition(this.posX, this.posY + (double)aint[0][1], this.posZ);
-@@ -605,8 +709,14 @@
+@@ -605,8 +705,14 @@
              this.motionZ = d5 * (double)(i - pos.getZ());
          }
  
@@ -374,7 +367,7 @@
              double d15 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
  
              if (d15 > 0.01D)
-@@ -642,7 +752,7 @@
+@@ -642,7 +748,7 @@
  
      protected void applyDrag()
      {
@@ -383,7 +376,7 @@
          {
              this.motionX *= 0.996999979019165D;
              this.motionY *= 0.0D;
-@@ -683,7 +793,7 @@
+@@ -683,7 +789,7 @@
  
          if (BlockRailBase.isRailBlock(iblockstate))
          {
@@ -392,7 +385,7 @@
              y = (double)j;
  
              if (blockrailbase$enumraildirection.isAscending())
-@@ -733,7 +843,7 @@
+@@ -733,7 +839,7 @@
  
          if (BlockRailBase.isRailBlock(iblockstate))
          {
@@ -401,7 +394,7 @@
              int[][] aint = MATRIX[blockrailbase$enumraildirection.getMetadata()];
              double d0 = (double)i + 0.5D + (double)aint[0][0] * 0.5D;
              double d1 = (double)j + 0.0625D + (double)aint[0][1] * 0.5D;
-@@ -830,12 +940,24 @@
+@@ -830,12 +936,24 @@
  
      public void applyEntityCollision(Entity entityIn)
      {
@@ -426,7 +419,7 @@
                      double d0 = entityIn.posX - this.posX;
                      double d1 = entityIn.posZ - this.posZ;
                      double d2 = d0 * d0 + d1 * d1;
-@@ -877,7 +999,7 @@
+@@ -877,7 +995,7 @@
                              double d7 = entityIn.motionX + this.motionX;
                              double d8 = entityIn.motionZ + this.motionZ;
  
@@ -435,7 +428,7 @@
                              {
                                  this.motionX *= 0.20000000298023224D;
                                  this.motionZ *= 0.20000000298023224D;
-@@ -885,7 +1007,7 @@
+@@ -885,7 +1003,7 @@
                                  entityIn.motionX *= 0.949999988079071D;
                                  entityIn.motionZ *= 0.949999988079071D;
                              }
@@ -444,7 +437,7 @@
                              {
                                  entityIn.motionX *= 0.20000000298023224D;
                                  entityIn.motionZ *= 0.20000000298023224D;
-@@ -971,7 +1093,7 @@
+@@ -971,7 +1089,7 @@
          return ((Integer)this.dataManager.get(ROLLING_DIRECTION)).intValue();
      }
  
@@ -453,7 +446,7 @@
  
      public IBlockState getDisplayTile()
      {
-@@ -1014,7 +1136,245 @@
+@@ -1014,7 +1132,240 @@
      {
          this.getDataManager().set(SHOW_BLOCK, Boolean.valueOf(showBlock));
      }
@@ -504,12 +497,7 @@
 +        double max = this.getMaxSpeed();
 +        mX = MathHelper.clamp(mX, -max, max);
 +        mZ = MathHelper.clamp(mZ, -max, max);
-+        double finalMX = mX;
-+        double finalMZ = mZ;
-+        this.moveTask.thenApplyAsync(f->{
-+            this.move(MoverType.SELF, finalMX, 0.0D, finalMZ);
-+            return null;
-+        }, MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
++        this.move(MoverType.SELF,mX, 0.0D, mZ);
 +    }
 +
 +    /**
@@ -699,7 +687,7 @@
      public static enum Type
      {
          RIDEABLE(0, "MinecartRideable"),
-@@ -1025,7 +1385,7 @@
+@@ -1025,7 +1376,7 @@
          HOPPER(5, "MinecartHopper"),
          COMMAND_BLOCK(6, "MinecartCommandBlock");
  
@@ -708,7 +696,7 @@
          private final int id;
          private final String name;
  
-@@ -1048,16 +1408,38 @@
+@@ -1048,16 +1399,38 @@
          @SideOnly(Side.CLIENT)
          public static EntityMinecart.Type getById(int idIn)
          {

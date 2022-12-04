@@ -16,6 +16,7 @@ public class WorkerConfig {
     public static boolean AUTO_CLEAR_WORKERS;
     public static boolean SYNC_ENTITIES;
     public static boolean ASYNC_CATCHER_DISABLED;
+    public static boolean ASYNC_MOB_SPAWNING;
 
     public static void init(){
         try{
@@ -43,6 +44,7 @@ public class WorkerConfig {
             ENTITIES_WORKER_THREADS = workerConfig.getInt("entities-worker-threads",Runtime.getRuntime().availableProcessors());
             GLOBAL_WORKER_THREADS = workerConfig.getInt("global-worker-threads",Runtime.getRuntime().availableProcessors());
 
+            ASYNC_MOB_SPAWNING = miscConfig.getBoolean("async-mob-spawning",true);
             AUTO_CLEAR_WORKERS = miscConfig.getBoolean("auto-clear-workers",true);
             SYNC_ENTITIES = miscConfig.getBoolean("sync-entities-ticking",false);
             ASYNC_CATCHER_DISABLED = miscConfig.getBoolean("disable-async-catcher",false);

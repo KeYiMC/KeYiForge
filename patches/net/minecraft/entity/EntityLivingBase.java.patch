@@ -1064,20 +1064,15 @@
      }
  
      protected float getWaterSlowDown()
-@@ -1847,8 +2217,10 @@
-                         this.motionX *= 0.9900000095367432D;
+@@ -1848,7 +2218,6 @@
                          this.motionY *= 0.9800000190734863D;
                          this.motionZ *= 0.9900000095367432D;
--                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 -
-+                        this.moveTask.thenApplyAsync((a)->{
-+                            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                            return null;
-+                        },MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
                          if (this.collidedHorizontally && !this.world.isRemote)
                          {
                              double d11 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-@@ -1864,7 +2236,8 @@
+@@ -1864,7 +2233,8 @@
  
                          if (this.onGround && !this.world.isRemote)
                          {
@@ -1087,7 +1082,7 @@
                          }
                      }
                      else
-@@ -1874,7 +2247,8 @@
+@@ -1874,7 +2244,8 @@
  
                          if (this.onGround)
                          {
@@ -1097,7 +1092,7 @@
                          }
  
                          float f7 = 0.16277136F / (f6 * f6 * f6);
-@@ -1894,7 +2268,8 @@
+@@ -1894,7 +2265,8 @@
  
                          if (this.onGround)
                          {
@@ -1107,153 +1102,40 @@
                          }
  
                          if (this.isOnLadder())
-@@ -1917,62 +2292,68 @@
-                             }
+@@ -1918,7 +2290,6 @@
                          }
  
--                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 -
--                        if (this.collidedHorizontally && this.isOnLadder())
--                        {
--                            this.motionY = 0.2D;
--                        }
--
--                        if (this.isPotionActive(MobEffects.LEVITATION))
--                        {
--                            this.motionY += (0.05D * (double)(this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY) * 0.2D;
--                        }
--                        else
--                        {
--                            blockpos$pooledmutableblockpos.setPos(this.posX, 0.0D, this.posZ);
--
--                            if (!this.world.isRemote || this.world.isBlockLoaded(blockpos$pooledmutableblockpos) && this.world.getChunkFromBlockCoords(blockpos$pooledmutableblockpos).isLoaded())
-+                        float finalF = f6;
-+                        this.moveTask.thenApplyAsync(a->{
-+                            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                            if (this.collidedHorizontally && this.isOnLadder())
-                             {
--                                if (!this.hasNoGravity())
--                                {
--                                    this.motionY -= 0.08D;
--                                }
-+                                this.motionY = 0.2D;
-                             }
--                            else if (this.posY > 0.0D)
-+
-+                            if (this.isPotionActive(MobEffects.LEVITATION))
-                             {
--                                this.motionY = -0.1D;
-+                                this.motionY += (0.05D * (double)(this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY) * 0.2D;
-                             }
-                             else
-                             {
--                                this.motionY = 0.0D;
-+                                blockpos$pooledmutableblockpos.setPos(this.posX, 0.0D, this.posZ);
-+
-+                                if (!this.world.isRemote || this.world.isBlockLoaded(blockpos$pooledmutableblockpos) && this.world.getChunkFromBlockCoords(blockpos$pooledmutableblockpos).isLoaded())
-+                                {
-+                                    if (!this.hasNoGravity())
-+                                    {
-+                                        this.motionY -= 0.08D;
-+                                    }
-+                                }
-+                                else if (this.posY > 0.0D)
-+                                {
-+                                    this.motionY = -0.1D;
-+                                }
-+                                else
-+                                {
-+                                    this.motionY = 0.0D;
-+                                }
-                             }
--                        }
+                         if (this.collidedHorizontally && this.isOnLadder())
+                         {
+                             this.motionY = 0.2D;
+@@ -1950,8 +2321,8 @@
+                         }
  
--                        this.motionY *= 0.9800000190734863D;
+                         this.motionY *= 0.9800000190734863D;
 -                        this.motionX *= (double)f6;
 -                        this.motionZ *= (double)f6;
--                        blockpos$pooledmutableblockpos.release();
-+                            this.motionY *= 0.9800000190734863D;
-+                            this.motionX *= finalF;
-+                            this.motionZ *= finalF;
-+                            blockpos$pooledmutableblockpos.release();
-+                            return null;
-+                        },MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
++                        this.motionX *= f6;
++                        this.motionZ *= f6;
+                         blockpos$pooledmutableblockpos.release();
                      }
                  }
-                 else
-                 {
-                     double d4 = this.posY;
-                     this.moveRelative(strafe, vertical, forward, 0.02F);
--                    this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--                    this.motionX *= 0.5D;
--                    this.motionY *= 0.5D;
--                    this.motionZ *= 0.5D;
-+                    this.moveTask.thenApplyAsync(f->{
-+                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                        this.motionX *= 0.5D;
-+                        this.motionY *= 0.5D;
-+                        this.motionZ *= 0.5D;
- 
--                    if (!this.hasNoGravity())
--                    {
--                        this.motionY -= 0.02D;
--                    }
-+                        if (!this.hasNoGravity())
-+                        {
-+                            this.motionY -= 0.02D;
-+                        }
- 
--                    if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d4, this.motionZ))
--                    {
--                        this.motionY = 0.30000001192092896D;
--                    }
-+                        if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d4, this.motionZ))
-+                        {
-+                            this.motionY = 0.30000001192092896D;
-+                        }
-+                        return null;
-+                    },MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
-                 }
-             }
-             else
-@@ -1999,20 +2380,24 @@
+@@ -1999,10 +2370,11 @@
                  }
  
                  this.moveRelative(strafe, vertical, forward, f2);
--                this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--                this.motionX *= (double)f1;
--                this.motionY *= 0.800000011920929D;
--                this.motionZ *= (double)f1;
 +                float finalF = f1;
-+                this.moveTask.thenApplyAsync(f->{
-+                    this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                    this.motionX *= (double) finalF;
-+                    this.motionY *= 0.800000011920929D;
-+                    this.motionZ *= (double) finalF;
+                 this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+-                this.motionX *= (double)f1;
++                this.motionX *= (double) finalF;
+                 this.motionY *= 0.800000011920929D;
+-                this.motionZ *= (double)f1;
++                this.motionZ *= (double) finalF;
  
--                if (!this.hasNoGravity())
--                {
--                    this.motionY -= 0.02D;
--                }
-+                    if (!this.hasNoGravity())
-+                    {
-+                        this.motionY -= 0.02D;
-+                    }
- 
--                if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ))
--                {
--                    this.motionY = 0.30000001192092896D;
--                }
-+                    if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ))
-+                    {
-+                        this.motionY = 0.30000001192092896D;
-+                    }
-+                    return null;
-+                },MinecraftServer.ASYNC_ENTITY_MOVE_EXECUTOR);
-             }
-         }
- 
-@@ -2054,6 +2439,7 @@
+                 if (!this.hasNoGravity())
+                 {
+@@ -2054,6 +2426,7 @@
  
      public void onUpdate()
      {
@@ -1261,7 +1143,7 @@
          super.onUpdate();
          this.updateActiveHand();
  
-@@ -2096,7 +2482,9 @@
+@@ -2096,7 +2469,9 @@
  
                  if (!ItemStack.areItemStacksEqual(itemstack1, itemstack))
                  {
@@ -1271,7 +1153,7 @@
  
                      if (!itemstack.isEmpty())
                      {
-@@ -2134,7 +2522,6 @@
+@@ -2134,7 +2509,6 @@
                  }
              }
          }
@@ -1279,7 +1161,7 @@
          this.onLivingUpdate();
          double d0 = this.posX - this.prevPosX;
          double d1 = this.posZ - this.prevPosZ;
-@@ -2172,10 +2559,7 @@
+@@ -2172,10 +2546,7 @@
          }
  
          this.onGroundSpeedFactor += (f - this.onGroundSpeedFactor) * 0.3F;
@@ -1290,7 +1172,7 @@
  
          while (this.rotationYaw - this.prevRotationYaw < -180.0F)
          {
-@@ -2217,7 +2601,6 @@
+@@ -2217,7 +2588,6 @@
              this.prevRotationYawHead += 360.0F;
          }
  
@@ -1298,7 +1180,7 @@
          this.movedDistance += f5;
  
          if (this.isElytraFlying())
-@@ -2303,8 +2686,6 @@
+@@ -2303,8 +2673,6 @@
              this.motionZ = 0.0D;
          }
  
@@ -1307,7 +1189,7 @@
          if (this.isMovementBlocked())
          {
              this.isJumping = false;
-@@ -2314,14 +2695,9 @@
+@@ -2314,14 +2682,9 @@
          }
          else if (this.isServerWorld())
          {
@@ -1322,7 +1204,7 @@
          if (this.isJumping)
          {
              if (this.isInWater())
-@@ -2343,17 +2719,12 @@
+@@ -2343,17 +2706,12 @@
              this.jumpTicks = 0;
          }
  
@@ -1340,7 +1222,7 @@
      }
  
      private void updateElytra()
-@@ -2385,7 +2756,8 @@
+@@ -2385,7 +2743,8 @@
  
          if (!this.world.isRemote)
          {
@@ -1350,7 +1232,7 @@
          }
      }
  
-@@ -2419,9 +2791,13 @@
+@@ -2419,9 +2778,13 @@
                  }
              }
  
@@ -1365,7 +1247,7 @@
                  this.collideWithEntity(entity);
              }
          }
-@@ -2519,12 +2895,12 @@
+@@ -2519,12 +2882,12 @@
  
      public boolean canBeCollidedWith()
      {
@@ -1380,7 +1262,7 @@
      }
  
      protected void markVelocityChanged()
-@@ -2575,6 +2951,40 @@
+@@ -2575,6 +2938,40 @@
          this.potionsNeedUpdate = true;
      }
  
@@ -1421,7 +1303,7 @@
      public abstract EnumHandSide getPrimaryHand();
  
      public boolean isHandActive()
-@@ -2592,15 +3002,23 @@
+@@ -2592,15 +2989,23 @@
          if (this.isHandActive())
          {
              ItemStack itemstack = this.getHeldItem(this.getActiveHand());
@@ -1446,7 +1328,7 @@
                  {
                      this.onItemUseFinish();
                  }
-@@ -2618,8 +3036,10 @@
+@@ -2618,8 +3023,10 @@
  
          if (!itemstack.isEmpty() && !this.isHandActive())
          {
@@ -1458,7 +1340,7 @@
  
              if (!this.world.isRemote)
              {
-@@ -2700,7 +3120,27 @@
+@@ -2700,7 +3107,27 @@
          if (!this.activeItemStack.isEmpty() && this.isHandActive())
          {
              this.updateItemUse(this.activeItemStack, 16);
@@ -1487,7 +1369,7 @@
              this.resetActiveHand();
          }
      }
-@@ -2724,7 +3164,8 @@
+@@ -2724,7 +3151,8 @@
      {
          if (!this.activeItemStack.isEmpty())
          {
@@ -1497,7 +1379,7 @@
          }
  
          this.resetActiveHand();
-@@ -2808,11 +3249,14 @@
+@@ -2808,11 +3236,14 @@
  
              if (flag1)
              {
@@ -1517,7 +1399,7 @@
                  }
              }
          }
-@@ -2847,11 +3291,41 @@
+@@ -2847,11 +3278,41 @@
          }
      }
  
@@ -1559,7 +1441,7 @@
      public boolean attackable()
      {
          return true;
-@@ -2861,4 +3335,30 @@
+@@ -2861,4 +3322,30 @@
      public void setPartying(BlockPos pos, boolean p_191987_2_)
      {
      }
