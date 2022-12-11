@@ -3,7 +3,7 @@ package gg.m2ke4u.keyicore.utils;
 import net.himeki.mcmtfabric.parallelised.ConcurrentDoublyLinkedList;
 import java.util.*;
 
-//只用于解决与车万女仆mod的冲突问题以及计划刻部分，请勿使用到其他地方
+//只用于解决与车万女仆mod的冲突问题。请勿使用到其他地方
 @Deprecated
 public class ConcurrentCastableListLinkedHashSet<E> extends LinkedHashSet<E> implements Set<E>{
     private final List<E> bakingList = new ConcurrentDoublyLinkedList<>();
