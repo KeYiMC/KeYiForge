@@ -1,4 +1,4 @@
-﻿package gg.m2ke4u.keyicore.utils;
+package gg.m2ke4u.keyicore.utils;
 
 import java.util.Collection;
 import java.util.Spliterator;
