@@ -710,7 +710,7 @@
  
          if (!this.usageSnooper.isSnooperRunning() && this.tickCounter > 100)
          {
-@@ -669,91 +832,108 @@
+@@ -669,91 +832,118 @@
              this.usageSnooper.addMemoryStatsToSnooper();
          }
  
@@ -725,6 +725,7 @@
 -    public void updateTimeLightAndEntities()
 -    {
 -        this.profiler.startSection("jobs");
++    //Init config
 +    static {
 +        WorkerConfig.init();
 +    }
@@ -833,23 +834,29 @@
 -                    worldserver.addWorldInfoToCrashReport(crashreport1);
 -                    throw new ReportedException(crashreport1);
 -                }
--
++    public void updateTimeLightAndEntities()
++    {
+ 
 -                this.profiler.endSection();
 -                this.profiler.startSection("tracker");
 -                worldserver.getEntityTracker().tick();
 -                this.profiler.endSection();
 -                this.profiler.endSection();
-+    public void updateTimeLightAndEntities()
-+    {
+-            }
 +        if (this.worldExecutor == null){
 +            this.worldExecutor = wrapNewWorkerPool(this.worlds.length,null);
 +        }
+ 
+-            this.timeOfLastDimensionTick[j][this.tickCounter % 100] = System.nanoTime() - i;
 +        this.server.getScheduler().mainThreadHeartbeat(this.tickCounter); // CraftBukkit
++
 +        FutureTask<?> entry;
 +        int count = this.futureTaskQueue.size();
 +        while (count-- > 0 && (entry = this.futureTaskQueue.poll()) != null) {
 +            Util.runTask(entry, MinecraftServer.LOGGER);
-+         }
+         }
+ 
+-        this.profiler.endStartSection("connection");
 +        while (!processQueue.isEmpty()) {
 +            processQueue.remove().run();
 +        }
@@ -857,28 +864,29 @@
 +        // Send time updates to everyone, it will get the right time from the world the player is in.
 +        if (this.tickCounter % 20 == 0) {
 +            for (int i = 0; i < this.getPlayerList().getPlayers().size(); ++i) {
-+                EntityPlayerMP entityplayer = (EntityPlayerMP) this.getPlayerList().getPlayers().get(i);
++                EntityPlayerMP entityplayer = this.getPlayerList().getPlayers().get(i);
 +                entityplayer.connection.sendPacket(new SPacketTimeUpdate(entityplayer.world.getTotalWorldTime(), entityplayer.getPlayerTime(), entityplayer.world.getGameRules().getBoolean("doDaylightCycle"))); // Add support for per player time
-             }
--
--            this.timeOfLastDimensionTick[j][this.tickCounter % 100] = System.nanoTime() - i;
-         }
--
--        this.profiler.endStartSection("connection");
++            }
++        }
 +        net.minecraftforge.common.chunkio.ChunkIOExecutor.tick();
++
 +        catserver.server.command.internal.CommandChunkStats.onServerTick();
 +        this.worldTickTask.call(this);
 +        net.minecraftforge.common.DimensionManager.unloadWorlds(worldTickTimes);
++        //Network tick
          this.getNetworkSystem().networkTick();
 -        this.profiler.endStartSection("players");
++        //Player list tick
          this.playerList.onTick();
 -        this.profiler.endStartSection("commandFunctions");
++        //Game functions
          this.getFunctionManager().update();
 -        this.profiler.endStartSection("tickables");
 -
 -        for (int k = 0; k < this.tickables.size(); ++k)
 -        {
 -            ((ITickable)this.tickables.get(k)).update();
++        //Server GUI update
 +        for (ITickable tickable : this.tickables) {
 +            tickable.update();
          }
@@ -887,7 +895,7 @@
      }
  
      public boolean getAllowNether()
-@@ -763,8 +943,11 @@
+@@ -763,8 +953,11 @@
  
      public void startServerThread()
      {
@@ -900,7 +908,7 @@
      }
  
      public File getFile(String fileName)
-@@ -779,16 +962,20 @@
+@@ -779,16 +972,20 @@
  
      public WorldServer getWorld(int dimension)
      {
@@ -927,7 +935,7 @@
      public String getMinecraftVersion()
      {
          return "1.12.2";
-@@ -816,19 +1003,11 @@
+@@ -816,19 +1013,11 @@
  
      public String getServerModName()
      {
@@ -948,7 +956,7 @@
          if (this.playerList != null)
          {
              report.getCategory().addDetail("Player Count", new ICrashReportDetail<String>()
-@@ -845,7 +1024,7 @@
+@@ -845,7 +1034,7 @@
  
      public List<String> getTabCompletions(ICommandSender sender, String input, @Nullable BlockPos pos, boolean hasTargetBlock)
      {
@@ -957,7 +965,7 @@
          boolean flag = input.startsWith("/");
  
          if (flag)
-@@ -862,11 +1041,9 @@
+@@ -862,11 +1051,9 @@
              {
                  if (CommandBase.doesStringStartWith(s2, s1))
                  {
@@ -970,7 +978,7 @@
          }
          else
          {
-@@ -879,22 +1056,24 @@
+@@ -879,22 +1066,24 @@
                  {
                      if (flag1 && !hasTargetBlock)
                      {
@@ -1000,7 +1008,7 @@
      }
  
      public String getName()
-@@ -904,7 +1083,8 @@
+@@ -904,7 +1093,8 @@
  
      public void sendMessage(ITextComponent component)
      {
@@ -1010,7 +1018,7 @@
      }
  
      public boolean canUseCommand(int permLevel, String commandName)
-@@ -947,13 +1127,11 @@
+@@ -947,13 +1137,11 @@
          this.folderName = name;
      }
  
@@ -1024,7 +1032,7 @@
      public String getWorldName()
      {
          return this.worldName;
-@@ -966,7 +1144,7 @@
+@@ -966,7 +1154,7 @@
  
      public void setDifficultyForAllWorlds(EnumDifficulty difficulty)
      {
@@ -1033,7 +1041,7 @@
          {
              if (worldserver1 != null)
              {
-@@ -1048,9 +1226,9 @@
+@@ -1048,9 +1236,9 @@
          playerSnooper.addClientStat("avg_tick_ms", Integer.valueOf((int)(MathHelper.average(this.tickTimeArray) * 1.0E-6D)));
          int l = 0;
  
@@ -1045,7 +1053,7 @@
              {
                  if (worldserver1 != null)
                  {
-@@ -1088,7 +1266,8 @@
+@@ -1088,7 +1276,8 @@
  
      public boolean isServerInOnlineMode()
      {
@@ -1055,7 +1063,7 @@
      }
  
      public void setOnlineMode(boolean online)
-@@ -1177,12 +1356,12 @@
+@@ -1177,12 +1366,12 @@
  
      public void setPlayerList(PlayerList list)
      {
@@ -1070,7 +1078,7 @@
          {
              worldserver1.getWorldInfo().setGameType(gameMode);
          }
-@@ -1211,10 +1390,7 @@
+@@ -1211,10 +1400,7 @@
          return this.tickCounter;
      }
  
@@ -1082,7 +1090,7 @@
  
      @SideOnly(Side.CLIENT)
      public Snooper getPlayerUsageSnooper()
-@@ -1224,7 +1400,7 @@
+@@ -1224,7 +1410,7 @@
  
      public World getEntityWorld()
      {
@@ -1091,7 +1099,7 @@
      }
  
      public boolean isBlockProtected(World worldIn, BlockPos pos, EntityPlayer playerIn)
-@@ -1285,7 +1461,7 @@
+@@ -1285,7 +1471,7 @@
      @Nullable
      public Entity getEntityFromUuid(UUID uuid)
      {
@@ -1100,7 +1108,7 @@
          {
              if (worldserver1 != null)
              {
-@@ -1303,7 +1479,7 @@
+@@ -1303,7 +1489,7 @@
  
      public boolean sendCommandFeedback()
      {
@@ -1109,7 +1117,7 @@
      }
  
      public MinecraftServer getServer()
-@@ -1311,6 +1487,11 @@
+@@ -1311,6 +1497,11 @@
          return this;
      }
  
@@ -1121,7 +1129,7 @@
      public int getMaxWorldSize()
      {
          return 29999984;
-@@ -1320,15 +1501,14 @@
+@@ -1320,15 +1511,14 @@
      {
          Validate.notNull(callable);
  
@@ -1142,7 +1150,7 @@
          }
          else
          {
-@@ -1366,12 +1546,12 @@
+@@ -1366,12 +1556,12 @@
  
      public AdvancementManager getAdvancementManager()
      {
@@ -1157,7 +1165,7 @@
      }
  
      public void reload()
-@@ -1379,7 +1559,7 @@
+@@ -1379,7 +1569,7 @@
          if (this.isCallingFromMinecraftThread())
          {
              this.getPlayerList().saveAllPlayerData();
@@ -1166,7 +1174,7 @@
              this.getAdvancementManager().reload();
              this.getFunctionManager().reload();
              this.getPlayerList().reloadResources();
-@@ -1409,120 +1589,47 @@
+@@ -1409,120 +1599,47 @@
      }
  
      @SideOnly(Side.SERVER)
@@ -1313,7 +1321,7 @@
          }
          catch (Exception exception)
          {
-@@ -1539,7 +1646,8 @@
+@@ -1539,7 +1656,8 @@
      @SideOnly(Side.SERVER)
      public boolean isDebuggingEnabled()
      {
@@ -1323,7 +1331,7 @@
      }
  
      @SideOnly(Side.SERVER)
-@@ -1598,4 +1706,9 @@
+@@ -1598,4 +1716,9 @@
      {
          return this.serverThread;
      }
