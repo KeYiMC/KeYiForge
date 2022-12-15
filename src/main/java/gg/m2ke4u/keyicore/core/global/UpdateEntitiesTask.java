@@ -31,7 +31,7 @@ public final class UpdateEntitiesTask implements TickTask<World> {
     public void call(World input) {
         try {
             this.profiler.postSection();;
-            CollectionConcurrentUtils.traverseConcurrent(input.weatherEffects, entity->{
+            CollectionConcurrentUtils.runTraverseInOtherPool(input.weatherEffects, entity->{
                 if (entity == null || this.terminated) {
                     return;
                 }
@@ -43,7 +43,7 @@ public final class UpdateEntitiesTask implements TickTask<World> {
                 }
                 catch (Throwable throwable2) {throwable2.printStackTrace();}
                 if (entity.isDead) {input.weatherEffects.remove(entity);}
-            },this.executor);
+            }, ((ForkJoinPool) this.executor));
 
             input.loadedEntityList.removeAll(input.unloadedEntityList);
             CollectionConcurrentUtils.traverseConcurrent(input.unloadedEntityList,entity1->{
@@ -58,12 +58,12 @@ public final class UpdateEntitiesTask implements TickTask<World> {
 
             org.spigotmc.ActivationRange.activateEntities(input); // Spigot
             input.entityLimiter.initTick();
-            ConcurrentlyTraverse.wrapNewAndRun(input.loadedEntityList,entity2->{
+            CollectionConcurrentUtils.runTraverseInOtherPool(input.loadedEntityList,entity2->{
                 if (this.terminated){
                     return;
                 }
                 entityTickTask.call(entity2);
-            }, ((ForkJoinPool) this.executor)).join();
+            }, ((ForkJoinPool) this.executor));
 
             input.processingLoadedTiles = true; //FML Move above remove to prevent CMEs
 
@@ -79,22 +79,22 @@ public final class UpdateEntitiesTask implements TickTask<World> {
             }
 
             input.tileLimiter.initTick();
-            ConcurrentlyTraverse.wrapNewAndRun(input.tickableTileEntities,tileentity->{
+            CollectionConcurrentUtils.runTraverseInOtherPool(input.tickableTileEntities,tileentity->{
                 if (this.terminated){
                     return;
                 }
                 tickableTileEntityTickTask.call(tileentity);
-            },((ForkJoinPool) this.executor)).join();
+            },((ForkJoinPool) this.executor));
             input.processingLoadedTiles = false;
 
             if (!input.addedTileEntityList.isEmpty())
             {
-                ConcurrentlyTraverse.wrapNewAndRun(input.addedTileEntityList,tileentity1->{
+                CollectionConcurrentUtils.runTraverseInOtherPool(input.addedTileEntityList,tileentity1->{
                     if (this.terminated){
                         return;
                     }
                     addedTileEntityTickTask.call(tileentity1);
-                },((ForkJoinPool) this.executor)).join();
+                },((ForkJoinPool) this.executor));
                 input.addedTileEntityList.clear();
             }
         }finally {

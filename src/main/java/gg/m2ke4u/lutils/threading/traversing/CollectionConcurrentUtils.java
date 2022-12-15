@@ -58,6 +58,10 @@ public class CollectionConcurrentUtils{
         pool.submit(()->stream.parallel().forEach(action)).join();
     }
 
+    public static <E> void runTraverseInOtherPool(Collection<E> collection, Consumer<E> action, ForkJoinPool pool){
+        pool.submit(()->collection.parallelStream().forEach(action)).join();
+    }
+
     public static <E> Object[] runSupplyConcurrent(Supplier<E>[] suppliers,Executor executor){
         CompletableFuture<E>[] futures = Arrays.stream(suppliers).map(value-> CompletableFuture.supplyAsync(value,executor)).toArray(length->new CompletableFuture[length]);
         Object[] objects = new Object[suppliers.length];
