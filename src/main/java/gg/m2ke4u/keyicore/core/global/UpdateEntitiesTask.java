@@ -1,5 +1,6 @@
 package gg.m2ke4u.keyicore.core.global;
 
+import gg.m2ke4u.keyicore.config.WorkerConfig;
 import gg.m2ke4u.keyicore.utils.ConcurrentlyTraverse;
 import gg.m2ke4u.lutils.threading.traversing.CollectionConcurrentUtils;
 import gg.m2ke4u.keyicore.core.TickTask;
@@ -58,12 +59,25 @@ public final class UpdateEntitiesTask implements TickTask<World> {
 
             org.spigotmc.ActivationRange.activateEntities(input); // Spigot
             input.entityLimiter.initTick();
-            CollectionConcurrentUtils.runTraverseInOtherPool(input.loadedEntityList,entity2->{
-                if (this.terminated){
-                    return;
-                }
-                entityTickTask.call(entity2);
-            }, ((ForkJoinPool) this.executor));
+
+            switch (WorkerConfig.WORKER_MODE){
+                case 1:
+
+                    CollectionConcurrentUtils.traverseConcurrent(input.loadedEntityList,entity2->{
+                    if (this.terminated){
+                        return;
+                    }
+                    entityTickTask.call(entity2);
+                }, ((ForkJoinPool) this.executor));
+                    break;
+                case 2:
+                    CollectionConcurrentUtils.runTraverseInOtherPool(input.loadedEntityList,entity2->{
+                        if (this.terminated){
+                            return;
+                        }
+                        entityTickTask.call(entity2);
+                    }, ((ForkJoinPool) this.executor));
+            }
 
             input.processingLoadedTiles = true; //FML Move above remove to prevent CMEs
 
@@ -79,22 +93,47 @@ public final class UpdateEntitiesTask implements TickTask<World> {
             }
 
             input.tileLimiter.initTick();
-            CollectionConcurrentUtils.runTraverseInOtherPool(input.tickableTileEntities,tileentity->{
-                if (this.terminated){
-                    return;
-                }
-                tickableTileEntityTickTask.call(tileentity);
-            },((ForkJoinPool) this.executor));
-            input.processingLoadedTiles = false;
 
+            switch (WorkerConfig.WORKER_MODE){
+                case 1:
+                    CollectionConcurrentUtils.traverseConcurrent(input.tickableTileEntities,tileentity->{
+                        if (this.terminated){
+                            return;
+                        }
+                        tickableTileEntityTickTask.call(tileentity);
+                    },((ForkJoinPool) this.executor));
+                    break;
+                case 2:
+                    CollectionConcurrentUtils.runTraverseInOtherPool(input.tickableTileEntities,tileentity->{
+                        if (this.terminated){
+                            return;
+                        }
+                        tickableTileEntityTickTask.call(tileentity);
+                    },((ForkJoinPool) this.executor));
+                    break;
+            }
+
+            input.processingLoadedTiles = false;
             if (!input.addedTileEntityList.isEmpty())
             {
-                CollectionConcurrentUtils.runTraverseInOtherPool(input.addedTileEntityList,tileentity1->{
-                    if (this.terminated){
-                        return;
-                    }
-                    addedTileEntityTickTask.call(tileentity1);
-                },((ForkJoinPool) this.executor));
+                switch (WorkerConfig.WORKER_MODE){
+                    case 1:
+                        CollectionConcurrentUtils.traverseConcurrent(input.addedTileEntityList,tileentity1->{
+                            if (this.terminated){
+                                return;
+                            }
+                            addedTileEntityTickTask.call(tileentity1);
+                        },((ForkJoinPool) this.executor));
+                        break;
+                    case 2:
+                        CollectionConcurrentUtils.runTraverseInOtherPool(input.addedTileEntityList,tileentity1->{
+                            if (this.terminated){
+                                return;
+                            }
+                            addedTileEntityTickTask.call(tileentity1);
+                        },((ForkJoinPool) this.executor));
+                        break;
+                }
                 input.addedTileEntityList.clear();
             }
         }finally {

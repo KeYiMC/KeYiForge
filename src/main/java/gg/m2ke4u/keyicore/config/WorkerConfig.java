@@ -17,6 +17,7 @@ public class WorkerConfig {
     public static boolean SYNC_ENTITIES;
     public static boolean ASYNC_CATCHER_DISABLED;
     public static boolean ASYNC_MOB_SPAWNING;
+    public static int WORKER_MODE;
 
     public static void init(){
         try{
@@ -40,6 +41,7 @@ public class WorkerConfig {
                 workerConfig = CONFIGURATION.getConfigurationSection("workers");
                 miscConfig = CONFIGURATION.getConfigurationSection("misc");
             }
+            CONFIGURATION.options().copyDefaults(true);
 
             ENTITIES_WORKER_THREADS = workerConfig.getInt("entities-worker-threads",Runtime.getRuntime().availableProcessors());
             GLOBAL_WORKER_THREADS = workerConfig.getInt("global-worker-threads",Runtime.getRuntime().availableProcessors());
@@ -48,6 +50,7 @@ public class WorkerConfig {
             AUTO_CLEAR_WORKERS = miscConfig.getBoolean("auto-clear-workers",true);
             SYNC_ENTITIES = miscConfig.getBoolean("sync-entities-ticking",false);
             ASYNC_CATCHER_DISABLED = miscConfig.getBoolean("disable-async-catcher",false);
+            WORKER_MODE = miscConfig.getInt("worker-mode",2);
 
             if (needSave){
                 CONFIGURATION.save(CONFIG_FILE);
