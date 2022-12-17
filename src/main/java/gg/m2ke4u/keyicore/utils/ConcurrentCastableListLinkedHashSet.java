@@ -1,12 +1,13 @@
 package gg.m2ke4u.keyicore.utils;
 
-import net.himeki.mcmtfabric.parallelised.ConcurrentDoublyLinkedList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import java.util.*;
 
 //只用于解决与车万女仆mod的冲突问题。请勿使用到其他地方
 @Deprecated
 public class ConcurrentCastableListLinkedHashSet<E> extends LinkedHashSet<E> implements Set<E>{
-    private final List<E> bakingList = new ConcurrentDoublyLinkedList<>();
+    private final List<E> bakingList = ObjectLists.synchronize(new ObjectArrayList<>());
 
     @Override
     public int size() {

@@ -2,26 +2,22 @@ package gg.m2ke4u.keyicore.concurrent;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.locks.LockSupport;
 
 public class SingleThreadExecutor implements Executor {
-    private final Queue<TaskEntry> tasks = new ConcurrentLinkedQueue<>();
+    private final LinkedBlockingQueue<TaskEntry> tasks = new LinkedBlockingQueue<>();
     private static final Logger logger = LogManager.getLogger();
 
     public SingleThreadExecutor(ThreadFactory factory){
         Thread worker = factory.newThread(()->{
             for (;;){
                 try {
-                    if (!this.tasks.isEmpty()){
-                        tasks.poll().runTask();
-                        continue;
-                    }
-                    Thread.sleep(0,1);
+                   this.tasks.take().runTask();
                 }catch (Exception e){
+                    e.printStackTrace();
                     logger.error(e);
                 }
             }
@@ -31,8 +27,9 @@ public class SingleThreadExecutor implements Executor {
             for (;;){
                 try {
                     this.tasks.removeIf(task -> (System.currentTimeMillis() - task.getCommitTime()) > 50);
-                    Thread.sleep(50);
+                    LockSupport.parkNanos(this,10000);
                 }catch (Exception e){
+                    e.printStackTrace();
                     logger.error(e);
                 }
             }
